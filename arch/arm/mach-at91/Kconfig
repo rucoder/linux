@@ -441,6 +441,12 @@ config MACH_AT91SAM9G45EKES
 	  "ES" at the end of the name means that this board is an
 	  Engineering Sample.
 
+config MACH_AT91SK9G45OEM
+	bool "Starter kit SK-9G45-OEM board"
+	select HAVE_NAND_ATMEL_BUSWIDTH_16
+	help
+	  Select this if you are using StarterKit SK-9G45-OEM board
+
 endif
 
 # ----------------------------------------------------------

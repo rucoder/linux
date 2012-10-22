@@ -80,6 +80,7 @@ obj-$(CONFIG_MACH_AT91SAM9G45EKES) += board-sam9m10g45ek.o
 # AT91SAM9M10 board-specific support
 obj-$(CONFIG_MACH_AT91SAM9M10EKES) += board-sam9m10g45ek.o
 obj-$(CONFIG_MACH_AT91SAM9M10G45EK) += board-sam9m10g45ek.o
+obj-$(CONFIG_MACH_AT91SK9G45OEM) += board-sk9g45oem.o
 
 # AT91SAM9X5 board-specific support
 obj-$(CONFIG_MACH_AT91SAM9X5EK) += board-sam9x5cm.o board-sam9x5ek.o
