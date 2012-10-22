@@ -1006,8 +1006,32 @@ config FB_ATMEL
 	select FB_CFB_COPYAREA
 	select FB_CFB_IMAGEBLIT
 	select FB_ATMEL_HLCD if ARCH_AT91SAM9X5
+	select FB_ATMEL_SK
 	help
 	  This enables support for the AT91/AT32 LCD Controller.
+
+menuconfig FB_ATMEL_SK
+       bool "Starterkit.ru TFT plug selection"
+       depends on FB_ATMEL
+       ---help---
+         This menu will let you enable support for the framebuffers with
+         non-native endianness (e.g. Little-Endian framebuffer on a
+         Big-Endian machine). Most probably you don't have such hardware,
+         so it's safe to say "n" here.
+
+choice
+       prompt "TFT plag selected - "
+       depends on FB_ATMEL_SK
+
+config FB_ATMEL_SK_800X480
+       bool "SK-T070-Plug"
+       ---help---
+         Put kernel tunes for 800x480 TFT panel
+
+
+endchoice
+
+
 
 config FB_INTSRAM
 	bool "Frame Buffer in internal SRAM"

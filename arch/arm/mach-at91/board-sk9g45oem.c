@@ -321,6 +321,39 @@ static struct platform_device *devices[] __initdata = {};
  * LCD Controller
  */
 #if defined(CONFIG_FB_ATMEL) || defined(CONFIG_FB_ATMEL_MODULE)
+
+#if defined(CONFIG_FB_ATMEL_SK_800X480)
+static struct fb_videomode at91_tft_vga_modes[] = {
+       {
+
+               .name           = "SK",
+               .refresh        = 60,
+               .xres           = 800,          .yres           = 480,
+               .pixclock       = KHZ2PICOS(30000),
+
+               .left_margin    = 100,          .right_margin   = 100,
+               .upper_margin   = 12,           .lower_margin   = 1,
+               .hsync_len      = 41,           .vsync_len      = 10,
+
+               .sync           = 0,
+               .vmode          = FB_VMODE_NONINTERLACED,
+       },
+};
+
+static struct fb_monspecs at91fb_default_monspecs = {
+       .manufacturer   = "SK",
+       .monitor        = "SK-T070-Plug",
+
+       .modedb         = at91_tft_vga_modes,
+       .modedb_len     = ARRAY_SIZE(at91_tft_vga_modes),
+       .hfmin          = 15000,
+       .hfmax          = 17640,
+       .vfmin          = 57,
+       .vfmax          = 67,
+};
+ #else
+
+
 static struct fb_videomode at91_tft_vga_modes[] = {
 	{
 		.name           = "LG",
@@ -348,7 +381,7 @@ static struct fb_monspecs at91fb_default_monspecs = {
 	.vfmin		= 57,
 	.vfmax		= 67,
 };
-
+#endif
 #define AT91SAM9G45_DEFAULT_LCDCON2 	(ATMEL_LCDC_MEMOR_LITTLE \
 					| ATMEL_LCDC_DISTYPE_TFT \
 					| ATMEL_LCDC_CLKMOD_ALWAYSACTIVE)
