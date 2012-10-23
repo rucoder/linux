@@ -1028,6 +1028,11 @@ config FB_ATMEL_SK_800X480
        ---help---
          Put kernel tunes for 800x480 TFT panel
 
+config FB_ATMEL_MI_640X480
+       bool "SMI0570KT-1"
+       ---help---
+         Put kernel tunes for 640x480 MI0570KT-1 TFT panel
+
 
 endchoice
 

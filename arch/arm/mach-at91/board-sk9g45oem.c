@@ -351,7 +351,35 @@ static struct fb_monspecs at91fb_default_monspecs = {
        .vfmin          = 57,
        .vfmax          = 67,
 };
- #else
+#elif defined(CONFIG_FB_ATMEL_MI_640X480)
+static struct fb_videomode at91_tft_vga_modes[] = {
+	{
+
+		.name           = "MI",
+		.refresh	= 60,
+		.xres		= 640,		.yres		= 480,
+		.pixclock	= KHZ2PICOS(30000),
+
+		.left_margin	= 114,		.right_margin	= 116,
+		.upper_margin	= 32,		.lower_margin	= 10,
+		.hsync_len	= 30,		.vsync_len	= 3,
+
+		.sync		= 0,
+		.vmode		= FB_VMODE_NONINTERLACED,
+	},
+};
+static struct fb_monspecs at91fb_default_monspecs = {
+	.manufacturer	= "MI",
+	.monitor        = "MI0570KT-1",
+
+	.modedb		= at91_tft_vga_modes,
+	.modedb_len	= ARRAY_SIZE(at91_tft_vga_modes),
+	.hfmin		= 15000,
+	.hfmax		= 17640,
+	.vfmin		= 57,
+	.vfmax		= 67,
+}; 
+#else
 
 
 static struct fb_videomode at91_tft_vga_modes[] = {
