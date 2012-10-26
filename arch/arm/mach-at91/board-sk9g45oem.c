@@ -46,6 +46,8 @@
 #include <mach/at91sam9_smc.h>
 #include <mach/at91_shdwc.h>
 
+#include <linux/spi/ads7846.h>
+
 #include <linux/usb/android_composite.h>
 
 #include "sam9_smc.h"
@@ -95,17 +97,53 @@ static struct usba_platform_data __initdata ek_usba_udc_data = {
 	.vbus_pin	= AT91_PIN_PB19,
 };
 
+/*
+ * ADS7846 Touchscreen
+ */
+#if defined(CONFIG_TOUCHSCREEN_ADS7846) || defined(CONFIG_TOUCHSCREEN_ADS7846_MODULE)
+static int ads7843_pendown_state(void)
+{
+	return !at91_get_gpio_value(AT91_PIN_PB4);	/* Touchscreen PENIRQ */
+}
+
+static struct ads7846_platform_data ads_info = {
+	.model			= 7843,
+	.x_min			= 150,
+	.x_max			= 3830,
+	.y_min			= 190,
+	.y_max			= 3830,
+//	.vref_delay_usecs	= 0,
+	.vref_mv		= 3120,
+	.x_plate_ohms		= 560,
+	.y_plate_ohms		= 230,
+	.penirq_recheck_delay_usecs = 100,
+//	.swap_xy
+//	.pressure_max		= 15000,
+	.debounce_max		= 2,
+//	.debounce_rep		= 0,
+	.debounce_tol		= 10,
+	.mirror_x		= false,
+	.mirror_y		= true,
+	.get_pendown_state	= ads7843_pendown_state,
+};
+#endif
+
 
 /*
  * SPI devices.
  */
 static struct spi_board_info ek_spi_devices[] = {
-	{	/* DataFlash chip */
-		.modalias	= "mtd_dataflash",
-		.chip_select	= 0,
-		.max_speed_hz	= 15 * 1000 * 1000,
+#if defined(CONFIG_TOUCHSCREEN_ADS7846) || defined(CONFIG_TOUCHSCREEN_ADS7846_MODULE)
+	{	/* ADS7846 */
+
+		.modalias	= "ads7846",
+		.max_speed_hz	= 1000000,
 		.bus_num	= 0,
+		.chip_select	= 0,
+		.platform_data	= &ads_info,
+		.irq		= AT91_PIN_PB4,
 	},
+#endif
 };
 
 
@@ -119,11 +157,11 @@ static struct mci_platform_data __initdata mci0_data = {
 	},
 };
 
+//FIXME: do we have this?
 static struct mci_platform_data __initdata mci1_data = {
 	.slot[0] = {
 		.bus_width	= 4,
 		.detect_pin	= AT91_PIN_PD12,
-//		.wp_pin		= AT91_PIN_PD29,
 	},
 };
 
@@ -452,7 +490,7 @@ static struct at91_tsadcc_data ek_tsadcc_data = {
 static struct gpio_keys_button ek_buttons[] = {
 	{	/* BP1, "leftclic" */
 		.code		= KEY_BACK,
-		.gpio		= AT91_PIN_PB6,
+		.gpio		= AT91_PIN_PC28,
 		.active_low	= 1,
 		.desc		= "left_click",
 		.wakeup		= 1,
@@ -740,12 +778,12 @@ static void __init ek_board_init(void)
 	at91_add_device_i2c(0, NULL, 0);
 	/* ISI */
 	platform_add_devices(devices, ARRAY_SIZE(devices));
-	at91_add_device_isi(&isi_data);
+	//at91_add_device_isi(&isi_data);
 
 	/* LCD Controller */
 	at91_add_device_lcdc(&ek_lcdc_data);
 	/* Touch Screen */
-	at91_add_device_tsadcc(&ek_tsadcc_data);
+	//at91_add_device_tsadcc(&ek_tsadcc_data);
 	/* Push Buttons */
 	ek_add_device_buttons();
 	/* AC97 */

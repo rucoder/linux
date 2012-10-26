@@ -774,6 +774,8 @@ static struct platform_device at91sam9g45_spi1_device = {
 
 static const unsigned spi1_standard_cs[4] = { AT91_PIN_PB17, AT91_PIN_PD28, AT91_PIN_PD18, AT91_PIN_PD19 };
 
+#define DUMP_SPI_DEVICE 1
+
 void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 {
 	int i;
@@ -790,6 +792,11 @@ void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 		else
 			cs_pin = spi1_standard_cs[devices[i].chip_select];
 
+		if (!gpio_is_valid(cs_pin)) {
+			printk(KERN_ERR "### SPI: device: %d : ERROR: valid GPIO for cs_pin=", i, cs_pin);
+			continue;
+		}
+
 		if (devices[i].bus_num == 0)
 			enable_spi0 = 1;
 		else
@@ -800,12 +807,23 @@ void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 
 		/* pass chip-select pin to driver */
 		devices[i].controller_data = (void *) cs_pin;
+
+	#if (DUMP_SPI_DEVICE)
+		printk(KERN_ERR "### SPI: device: %d", i);
+		printk(KERN_ERR "### SPI: cs_pin: %d", cs_pin);
+		printk(KERN_ERR "### SPI: chip_delect: %d", devices[i].chip_select);
+		printk(KERN_ERR "### SPI: bus_num: %d", devices[i].bus_num);
+		printk(KERN_ERR "### SPI: irq: %d", devices[i].irq);
+		printk(KERN_ERR "### SPI: max_speed_hz: %d", devices[i].max_speed_hz);
+		printk(KERN_ERR "### SPI: mode: %d", devices[i].mode);
+	#endif
 	}
 
 	spi_register_board_info(devices, nr_devices);
 
 	/* Configure SPI bus(es) */
 	if (enable_spi0) {
+		printk(KERN_ERR "### SPI 0 enabled");
 		at91_set_A_periph(AT91_PIN_PB0, 0);	/* SPI0_MISO */
 		at91_set_A_periph(AT91_PIN_PB1, 0);	/* SPI0_MOSI */
 		at91_set_A_periph(AT91_PIN_PB2, 0);	/* SPI0_SPCK */
@@ -814,6 +832,7 @@ void __init at91_add_device_spi(struct spi_board_info *devices, int nr_devices)
 		platform_device_register(&at91sam9g45_spi0_device);
 	}
 	if (enable_spi1) {
+		printk(KERN_ERR "### SPI 1 enabled");
 		at91_set_A_periph(AT91_PIN_PB14, 0);	/* SPI1_MISO */
 		at91_set_A_periph(AT91_PIN_PB15, 0);	/* SPI1_MOSI */
 		at91_set_A_periph(AT91_PIN_PB16, 0);	/* SPI1_SPCK */

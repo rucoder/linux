@@ -31,6 +31,7 @@
 #include <linux/spi/spi.h>
 #include <linux/spi/ads7846.h>
 #include <linux/regulator/consumer.h>
+#include <linux/module.h>
 #include <asm/irq.h>
 
 /*
@@ -109,6 +110,14 @@ struct ads7846 {
 	u16			pressure_max;
 
 	bool			swap_xy;
+
+	bool 			mirror_x;
+	bool   		mirror_y;
+
+
+	u16	x_min, x_max;
+	u16	y_min, y_max;
+	bool			use_internal;
 
 	struct ads7846_packet	*packet;
 
@@ -307,7 +316,6 @@ static int ads7846_read12_ser(struct device *dev, unsigned command)
 	struct ads7846 *ts = dev_get_drvdata(dev);
 	struct ser_req *req;
 	int status;
-	int use_internal;
 
 	req = kzalloc(sizeof *req, GFP_KERNEL);
 	if (!req)
@@ -315,11 +323,8 @@ static int ads7846_read12_ser(struct device *dev, unsigned command)
 
 	spi_message_init(&req->msg);
 
-	/* FIXME boards with ads7846 might use external vref instead ... */
-	use_internal = (ts->model == 7846);
-
 	/* maybe turn on internal vREF, and let it settle */
-	if (use_internal) {
+	if (ts->use_internal) {
 		req->ref_on = REF_ON;
 		req->xfer[0].tx_buf = &req->ref_on;
 		req->xfer[0].len = 1;
@@ -331,7 +336,13 @@ static int ads7846_read12_ser(struct device *dev, unsigned command)
 		/* for 1uF, settle for 800 usec; no cap, 100 usec.  */
 		req->xfer[1].delay_usecs = ts->vref_delay_usecs;
 		spi_message_add_tail(&req->xfer[1], &req->msg);
+
+		/* Enable reference voltage */
+		command |= ADS_PD10_REF_ON;
 	}
+
+	/* Enable ADC in every case */
+	command |= ADS_PD10_ADC_ON;
 
 	/* take sample */
 	req->command = (u8) command;
@@ -416,7 +427,7 @@ name ## _show(struct device *dev, struct device_attribute *attr, char *buf) \
 { \
 	struct ads7846 *ts = dev_get_drvdata(dev); \
 	ssize_t v = ads7846_read12_ser(dev, \
-			READ_12BIT_SER(var) | ADS_PD10_ALL_ON); \
+			READ_12BIT_SER(var)); \
 	if (v < 0) \
 		return v; \
 	return sprintf(buf, "%u\n", adjust(ts, v)); \
@@ -509,6 +520,7 @@ static int ads784x_hwmon_register(struct spi_device *spi, struct ads7846 *ts)
 		if (!ts->vref_mv) {
 			dev_dbg(&spi->dev, "assuming 2.5V internal vREF\n");
 			ts->vref_mv = 2500;
+			ts->use_internal = true;
 		}
 		break;
 	case 7845:
@@ -601,6 +613,7 @@ static ssize_t ads7846_disable_store(struct device *dev,
 
 	if (strict_strtoul(buf, 10, &i))
 		return -EINVAL;
+
 
 	if (i)
 		ads7846_disable(ts);
@@ -844,6 +857,12 @@ static void ads7846_report_state(struct ads7846 *ts)
 		if (ts->swap_xy)
 			swap(x, y);
 
+		if (ts->mirror_x)
+			x = ts->x_max - x;
+
+		if (ts->mirror_y)
+			y = ts->y_max - y;
+
 		if (!ts->pendown) {
 			input_report_key(input, BTN_TOUCH, 1);
 			ts->pendown = true;
@@ -870,6 +889,8 @@ static irqreturn_t ads7846_hard_irq(int irq, void *handle)
 static irqreturn_t ads7846_irq(int irq, void *handle)
 {
 	struct ads7846 *ts = handle;
+
+	printk(KERN_ERR "###### IRQ!");
 
 	/* Start with a small delay before checking pendown state */
 	msleep(TS_POLL_DELAY);
@@ -963,10 +984,12 @@ static int __devinit ads7846_setup_pendown(struct spi_device *spi, struct ads784
 		ts->get_pendown_state = pdata->get_pendown_state;
 	} else if (gpio_is_valid(pdata->gpio_pendown)) {
 
-		err = gpio_request(pdata->gpio_pendown, "ads7846_pendown");
+		err = gpio_request_one(pdata->gpio_pendown, GPIOF_IN,
+				       "ads7846_pendown");
 		if (err) {
-			dev_err(&spi->dev, "failed to request pendown GPIO%d\n",
-				pdata->gpio_pendown);
+			dev_err(&spi->dev,
+				"failed to request/setup pendown GPIO%d: %d\n",
+				pdata->gpio_pendown, err);
 			return err;
 		}
 
@@ -1192,6 +1215,8 @@ static int __devinit ads7846_probe(struct spi_device *spi)
 	unsigned long irq_flags;
 	int err;
 
+	printk(KERN_ERR "###################### PROBE >>");
+
 	if (!spi->irq) {
 		dev_dbg(&spi->dev, "no IRQ?\n");
 		return -ENODEV;
@@ -1234,6 +1259,12 @@ static int __devinit ads7846_probe(struct spi_device *spi)
 	ts->input = input_dev;
 	ts->vref_mv = pdata->vref_mv;
 	ts->swap_xy = pdata->swap_xy;
+	ts->mirror_x = pdata->mirror_x;
+	ts->mirror_y = pdata->mirror_y;
+	ts->x_min = pdata->x_min;
+	ts->y_min = pdata->y_min;
+	ts->x_max = pdata->x_max;
+	ts->y_max = pdata->y_max;
 
 	mutex_init(&ts->lock);
 	init_waitqueue_head(&ts->wait);
@@ -1340,8 +1371,7 @@ static int __devinit ads7846_probe(struct spi_device *spi)
 	if (ts->model == 7845)
 		ads7845_read12_ser(&spi->dev, PWRDOWN);
 	else
-		(void) ads7846_read12_ser(&spi->dev,
-				READ_12BIT_SER(vaux) | ADS_PD10_ALL_ON);
+		(void) ads7846_read12_ser(&spi->dev, READ_12BIT_SER(vaux));
 
 	err = sysfs_create_group(&spi->dev.kobj, &ads784x_attr_group);
 	if (err)
@@ -1352,6 +1382,9 @@ static int __devinit ads7846_probe(struct spi_device *spi)
 		goto err_remove_attr_group;
 
 	device_init_wakeup(&spi->dev, pdata->wakeup);
+
+	printk(KERN_ERR "###################### PROBE <<");
+
 
 	return 0;
 
@@ -1437,6 +1470,7 @@ static void __exit ads7846_exit(void)
 	spi_unregister_driver(&ads7846_driver);
 }
 module_exit(ads7846_exit);
+
 
 MODULE_DESCRIPTION("ADS7846 TouchScreen Driver");
 MODULE_LICENSE("GPL");
