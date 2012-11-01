@@ -769,7 +769,7 @@ static void __init ek_board_init(void)
 	at91_add_device_spi(ek_spi_devices, ARRAY_SIZE(ek_spi_devices));
 	/* MMC */
 	at91_add_device_mci(0, &mci0_data);
-	at91_add_device_mci(1, &mci1_data);
+	//at91_add_device_mci(1, &mci1_data);
 	/* Ethernet */
 	at91_add_device_eth(&ek_macb_data);
 	/* NAND */
