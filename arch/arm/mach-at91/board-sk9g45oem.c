@@ -103,7 +103,7 @@ static struct usba_platform_data __initdata ek_usba_udc_data = {
 #if defined(CONFIG_TOUCHSCREEN_ADS7846) || defined(CONFIG_TOUCHSCREEN_ADS7846_MODULE)
 static int ads7843_pendown_state(void)
 {
-	return !at91_get_gpio_value(AT91_PIN_PB4);	/* Touchscreen PENIRQ */
+	return !at91_get_gpio_value(AT91_PIN_PC27);	/* Touchscreen PENIRQ */
 }
 
 static struct ads7846_platform_data ads_info = {
@@ -141,7 +141,7 @@ static struct spi_board_info ek_spi_devices[] = {
 		.bus_num	= 0,
 		.chip_select	= 0,
 		.platform_data	= &ads_info,
-		.irq		= AT91_PIN_PB4,
+		.irq		= AT91_PIN_PC27,
 	},
 #endif
 };

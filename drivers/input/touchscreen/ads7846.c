@@ -890,8 +890,6 @@ static irqreturn_t ads7846_irq(int irq, void *handle)
 {
 	struct ads7846 *ts = handle;
 
-	printk(KERN_ERR "###### IRQ!");
-
 	/* Start with a small delay before checking pendown state */
 	msleep(TS_POLL_DELAY);
 
