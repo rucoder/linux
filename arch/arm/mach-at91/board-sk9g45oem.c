@@ -1,8 +1,7 @@
 /*
  *  Board-specific setup code for the AT91SAM9M10G45 Evaluation Kit family
  *
- *  Covers: * AT91SAM9G45-EKES  board
- *          * AT91SAM9M10G45-EK board
+ *  Covers: * SK-9G45-OEM board
  *
  *  Copyright (C) 2009 Atmel Corporation.
  *
