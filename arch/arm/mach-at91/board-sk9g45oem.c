@@ -1,8 +1,7 @@
 /*
  *  Board-specific setup code for the AT91SAM9M10G45 Evaluation Kit family
  *
- *  Covers: * AT91SAM9G45-EKES  board
- *          * AT91SAM9M10G45-EK board
+ *  Covers: * SK-9G45-OEM board
  *
  *  Copyright (C) 2009 Atmel Corporation.
  *
@@ -86,7 +85,7 @@ static struct at91_usbh_data __initdata ek_usbh_hs_data = {
   * We need to detect the interrup of vbus pin when we plugin/out usb cable
   * So we need to disable the power of PD3.This is because usb device and usb host share a usb port
   */
-	.vbus_pin		= {AT91_PIN_PD1},
+//	.vbus_pin		= {AT91_PIN_PD1},
 };
 
 
@@ -94,7 +93,7 @@ static struct at91_usbh_data __initdata ek_usbh_hs_data = {
  * USB HS Device port
  */
 static struct usba_platform_data __initdata ek_usba_udc_data = {
-	.vbus_pin	= AT91_PIN_PB19,
+	.vbus_pin	= AT91_PIN_PC25,
 };
 
 /*
