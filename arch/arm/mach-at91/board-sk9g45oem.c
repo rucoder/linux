@@ -61,7 +61,8 @@ static void __init ek_map_io(void)
 	/* DGBU on ttyS0. (Rx & Tx only) */
 	at91_register_uart(0, 0, 0);
 
-	/* USART0 not connected on the -EK board */
+        /* USART0 will be on ttyS1  */
+        at91_register_uart(AT91SAM9G45_ID_US0, 1, ATMEL_UART_CTS | ATMEL_UART_RTS);
 	/* USART1 on ttyS2. (Rx, Tx, RTS, CTS) */
 	at91_register_uart(AT91SAM9G45_ID_US1, 2, ATMEL_UART_CTS | ATMEL_UART_RTS);
 
